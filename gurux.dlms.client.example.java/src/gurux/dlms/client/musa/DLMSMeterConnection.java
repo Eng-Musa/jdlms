@@ -6,7 +6,9 @@ import gurux.dlms.GXReplyData;
 import gurux.dlms.client.GXDLMSReader;
 import gurux.dlms.client.GXDLMSSecureClient2;
 import gurux.dlms.enums.Authentication;
+import gurux.dlms.enums.Conformance;
 import gurux.dlms.enums.InterfaceType;
+import gurux.dlms.enums.ObjectType;
 import gurux.dlms.objects.GXDLMSObject;
 import gurux.dlms.objects.GXDLMSObjectCollection;
 import gurux.net.GXNet;
@@ -26,14 +28,15 @@ public class DLMSMeterConnection {
         GXDLMSSecureClient2 client = new GXDLMSSecureClient2(true);
 
         try {
-            // Set client and server addresses as required by your meter.
-            client.setClientAddress(16); // Typical public client address; adjust as needed
-            client.setServerAddress(1);  // Set to the meter’s actual server address if known
+            // Modified client configuration
+            client.setClientAddress(16);
+            client.setServerAddress(1);
             client.setInterfaceType(InterfaceType.HDLC);
-
-            // Configure authentication and password
             client.setAuthentication(AUTH_LEVEL);
             client.setPassword(PASSWORD.getBytes());
+
+            // get Association View
+            client.getProposedConformance().add(Conformance.GENERAL_PROTECTION);
 
             // Set trace level for detailed debugging information
             TraceLevel traceLevel = TraceLevel.VERBOSE;
@@ -49,6 +52,10 @@ public class DLMSMeterConnection {
             // Initialize the connection to retrieve association view.
             System.out.println("Initializing connection...");
             reader.initializeConnection();
+
+            // Get Association View explicitly
+            System.out.println("Getting Association View...");
+            reader.getAssociationView();
 
 
             // Retrieve objects from the meter
@@ -67,10 +74,26 @@ public class DLMSMeterConnection {
                 System.out.println("Object: " + obj.getLogicalName());
             }
 
+            // Try reading the power register with the Microstar OBIS code format
+            System.out.println("Reading power register...");
+            GXDLMSObject powerObject = client.getObjects().findByLN(ObjectType.REGISTER, "0.0.0.2.0.255");
+            System.out.println("PowerObject" + powerObject);
+
+            if (powerObject != null) {
+                Object result = reader.read(powerObject, 2);  // Attribute 2 typically contains the value
+                System.out.println("Power Value: " + result);
+            } else {
+                System.out.println("Power register not found. Dumping all available objects:");
+                for (GXDLMSObject obj : client.getObjects()) {
+                    System.out.println("Found object: " + obj.getLogicalName() + " Type: " + obj.getObjectType());
+                }
+            }
+
+
             // Search for active energy OBIS code
             GXDLMSObject activeEnergyObject = null;
             for (GXDLMSObject obj : objects) {
-                if ("1.0.1.7.0.255".equals(obj.getLogicalName())) {  // Match exact OBIS code format
+                if ("1.0.0.0.1.255".equals(obj.getLogicalName())) {  // Match exact OBIS code format
                     activeEnergyObject = obj;
                     break;
                 }
