@@ -156,7 +156,7 @@ public class GXDLMSReader {
         }
     }
 
-    void close() throws Exception {
+    public void close() throws Exception {
         if (Media != null && Media.isOpen()) {
             System.out.println("DisconnectRequest");
             GXReplyData reply = new GXReplyData();
@@ -554,11 +554,11 @@ public class GXDLMSReader {
     /**
      * Initializes connection.
      *
-     * @param port
+    // * @param port
      * @throws InterruptedException
      * @throws Exception
      */
-    void initializeConnection() throws Exception, InterruptedException {
+    public void initializeConnection() throws Exception, InterruptedException {
         if (Media instanceof GXSerial) {
             GXSerial serial = (GXSerial) Media;
             serial.setDtrEnable(true);
@@ -716,7 +716,7 @@ public class GXDLMSReader {
      * Read Profile Generic's data by range (start and end time).
      *
      * @param pg
-     * @param sortedItem
+    // * @param sortedItem
      * @param start
      * @param end
      * @return
@@ -733,7 +733,7 @@ public class GXDLMSReader {
      * Read Profile Generic's data by range (start and end time).
      *
      * @param pg
-     * @param sortedItem
+     //* @param sortedItem
      * @param start
      * @param end
      * @return
