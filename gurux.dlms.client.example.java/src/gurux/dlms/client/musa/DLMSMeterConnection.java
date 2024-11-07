@@ -90,6 +90,11 @@ public class DLMSMeterConnection {
             }
 
 
+            System.out.println("Debug - Conformance: " + client.getNegotiatedConformance());
+            System.out.println("Debug - Authentication level: " + client.getAuthentication());
+            System.out.println("Debug - Number of objects: " + client.getObjects().size());
+
+
             // Search for active energy OBIS code
             GXDLMSObject activeEnergyObject = null;
             for (GXDLMSObject obj : objects) {
