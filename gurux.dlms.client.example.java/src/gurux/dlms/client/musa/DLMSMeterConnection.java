@@ -15,6 +15,8 @@ import gurux.net.GXNet;
 import gurux.net.enums.NetworkType;
 
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class DLMSMeterConnection {
 
@@ -134,7 +136,7 @@ public class DLMSMeterConnection {
     }
 
     public static void main(String[] args) {
-        connectAndReadMeter1();
+        connectAndReadMeter2();
     }
 
 
@@ -169,9 +171,6 @@ public class DLMSMeterConnection {
 
             // Common OBIS codes for electrical measurements
             String[][] obisToRead = {
-                    {"1.0.0.0.1.255", "Active Energy Import"},
-                    {"1.0.0.0.2.255", "Active Energy Export"},
-                    {"1.0.1.7.0.255", "Active Power"},
                     {"0.0.1.0.0.255", "Clock"}
             };
 
@@ -205,5 +204,138 @@ public class DLMSMeterConnection {
                 System.err.println("Error closing connection: " + e.getMessage());
             }
         }
+    }
+
+    public static void connectAndReadMeter2() {
+        GXNet connection = new GXNet(NetworkType.TCP, IP_ADDRESS, PORT);
+        GXDLMSSecureClient2 client = new GXDLMSSecureClient2(true);
+
+        try {
+            // Basic client configuration
+            client.setClientAddress(16);
+            client.setServerAddress(1);
+            client.setInterfaceType(InterfaceType.HDLC);
+            client.setAuthentication(AUTH_LEVEL);
+            client.setPassword(PASSWORD.getBytes());
+
+            // Add necessary conformance
+            client.getProposedConformance().add(Conformance.GENERAL_PROTECTION);
+            client.getProposedConformance().add(Conformance.SELECTIVE_ACCESS);
+            client.getProposedConformance().add(Conformance.GET);
+
+            TraceLevel traceLevel = TraceLevel.VERBOSE;
+            GXDLMSReader reader = new GXDLMSReader(client, connection, traceLevel, null);
+
+            // Open connection and initialize
+            connection.open();
+            System.out.println("Initializing connection...");
+            reader.initializeConnection();
+            reader.getAssociationView();
+
+            // Read specific registers
+            System.out.println("\nReading meter registers:");
+
+            // Define registers to read with their OBIS codes
+            String[][] obisToRead = {
+                    {"0.0.1.0.0.255", "Clock"},
+                    {"1-0:0.0.0", "Meter Serial Number"},  // Convert from display format
+                    {"0.0.96.1.0.255", "Device ID 1"},     // Alternative location for serial number
+                    {"0.0.96.1.1.255", "Device ID 2"},     // Alternative location for serial number
+                    {"0.0.96.9.0.255", "Ambient Temperature"} // Common OBIS code for temperature
+
+            };
+
+            for (String[] obisCode : obisToRead) {
+                try {
+                    // Add delay between reads
+                    Thread.sleep(1000); // 1 second delay
+
+                    // Convert OBIS code if needed
+                    String logicalName = obisCode[0].contains("-") ?
+                            convertToLogicalName(obisCode[0]) : obisCode[0];
+
+                    System.out.println("\nReading " + obisCode[1] + " (" + logicalName + ")");
+
+                    GXDLMSObject obj = client.getObjects().findByLN(ObjectType.NONE, logicalName);
+                    if (obj != null) {
+                        // Read both value and scaler if available
+                        Object value = reader.read(obj, 2);  // Value in attribute 2
+                        System.out.println("Raw Value: " + value);
+
+                        try {
+                            // Try to read scaler (attribute 3) for numeric values
+                            Object scalerUnit = reader.read(obj, 3);
+                            if (scalerUnit instanceof Object[]) {
+                                Object[] su = (Object[]) scalerUnit;
+                                if (su.length >= 2 && su[0] instanceof Number) {
+                                    int scaler = ((Number) su[0]).intValue();
+                                    int unit = ((Number) su[1]).intValue();
+                                    if (value instanceof Number) {
+                                        double scaledValue = ((Number) value).doubleValue()
+                                                * Math.pow(10, scaler);
+                                        System.out.println("Scaled Value: " + scaledValue
+                                                + " " + getUnitString(unit));
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Ignore scaler reading errors - not all objects have scalers
+                        }
+
+                        // Print additional object information
+                        System.out.println("Object Type: " + obj.getObjectType());
+                        System.out.println("Description: " + obj.getDescription());
+                    } else {
+                        System.out.println("Object not found for OBIS code: " + logicalName);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error reading " + obisCode[1] + ": " + e.getMessage());
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) {
+                    System.out.println("\nClosing connection...");
+                    connection.close();
+                }
+            } catch (Exception e) {
+                System.err.println("Error closing connection: " + e.getMessage());
+            }
+        }
+    }
+
+    // Helper method to convert from display format to logical name format
+    private static String convertToLogicalName(String displayFormat) {
+        return displayFormat.replace("-", ".").replace(":", ".") + ".255";
+    }
+
+    // Helper method to get unit string
+    private static String getUnitString(int unit) {
+        switch (unit) {
+            case 27: return "W";
+            case 28: return "VA";
+            case 29: return "var";
+            case 30: return "Wh";
+            case 31: return "VAh";
+            case 32: return "varh";
+            case 33: return "A";
+            case 35: return "V";
+            case 44: return "Hz";
+            case 62: return "°C";  // Temperature
+            default: return "Unit(" + unit + ")";
+        }
+    }
+
+    // Helper method to format date/time values
+    private static String formatDateTime(Object value) {
+        if (value instanceof Date) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            return sdf.format((Date) value);
+        }
+        return String.valueOf(value);
     }
 }
