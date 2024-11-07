@@ -35,8 +35,10 @@ public class DLMSMeterConnection {
             client.setAuthentication(AUTH_LEVEL);
             client.setPassword(PASSWORD.getBytes());
 
-            // get Association View
+            // Add necessary conformance
             client.getProposedConformance().add(Conformance.GENERAL_PROTECTION);
+            client.getProposedConformance().add(Conformance.SELECTIVE_ACCESS);
+            client.getProposedConformance().add(Conformance.GET);
 
             // Set trace level for detailed debugging information
             TraceLevel traceLevel = TraceLevel.VERBOSE;
@@ -132,6 +134,76 @@ public class DLMSMeterConnection {
     }
 
     public static void main(String[] args) {
-        connectAndReadMeter();
+        connectAndReadMeter1();
+    }
+
+
+    public static void connectAndReadMeter1() {
+        GXNet connection = new GXNet(NetworkType.TCP, IP_ADDRESS, PORT);
+        GXDLMSSecureClient2 client = new GXDLMSSecureClient2(true);
+
+        try {
+            // Basic client configuration
+            client.setClientAddress(16);
+            client.setServerAddress(1);
+            client.setInterfaceType(InterfaceType.HDLC);
+            client.setAuthentication(AUTH_LEVEL);
+            client.setPassword(PASSWORD.getBytes());
+
+            // Add necessary conformance
+            client.getProposedConformance().add(Conformance.GENERAL_PROTECTION);
+            client.getProposedConformance().add(Conformance.SELECTIVE_ACCESS);
+            client.getProposedConformance().add(Conformance.GET);
+
+            TraceLevel traceLevel = TraceLevel.VERBOSE;
+            GXDLMSReader reader = new GXDLMSReader(client, connection, traceLevel, null);
+
+            // Open connection and initialize
+            connection.open();
+            System.out.println("Initializing connection...");
+            reader.initializeConnection();
+            reader.getAssociationView();
+
+            // Read specific registers
+            System.out.println("\nReading meter registers:");
+
+            // Common OBIS codes for electrical measurements
+            String[][] obisToRead = {
+                    {"1.0.0.0.1.255", "Active Energy Import"},
+                    {"1.0.0.0.2.255", "Active Energy Export"},
+                    {"1.0.1.7.0.255", "Active Power"},
+                    {"0.0.1.0.0.255", "Clock"}
+            };
+
+            for (String[] obisCode : obisToRead) {
+                try {
+                    GXDLMSObject obj = client.getObjects().findByLN(ObjectType.NONE, obisCode[0]);
+                    if (obj != null) {
+                        System.out.println("\nReading " + obisCode[1] + " (" + obisCode[0] + ")");
+                        Object result = reader.read(obj, 2);  // Attribute 2 typically contains the value
+                        System.out.println("Value: " + result);
+
+                        // Print additional object information
+                        System.out.println("Object Type: " + obj.getObjectType());
+                        System.out.println("Description: " + obj.getDescription());
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error reading " + obisCode[1] + ": " + e.getMessage());
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) {
+                    System.out.println("\nClosing connection...");
+                    connection.close();
+                }
+            } catch (Exception e) {
+                System.err.println("Error closing connection: " + e.getMessage());
+            }
+        }
     }
 }
