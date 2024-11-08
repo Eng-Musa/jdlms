@@ -22,8 +22,8 @@ public class DLMSMeterConnection {
 
     private static final String IP_ADDRESS = "172.16.8.140";  // Set your meter's IP here
     private static final int PORT = 5258;  // Set the communication port here
-    private static final String PASSWORD = "password";  // Set meter's password here
-    private static final Authentication AUTH_LEVEL = Authentication.NONE;  // Adjust as per your meter settings
+    private static final String PASSWORD = "";
+    private static final Authentication AUTH_LEVEL = Authentication.LOW;  // Adjust as per your meter settings
 
     public static void connectAndReadMeter() {
         GXNet connection = new GXNet(NetworkType.TCP, IP_ADDRESS, PORT);
@@ -31,7 +31,7 @@ public class DLMSMeterConnection {
 
         try {
             // Modified client configuration
-            client.setClientAddress(16);
+            client.setClientAddress(1);
             client.setServerAddress(1);
             client.setInterfaceType(InterfaceType.HDLC);
             client.setAuthentication(AUTH_LEVEL);
@@ -146,7 +146,7 @@ public class DLMSMeterConnection {
 
         try {
             // Basic client configuration
-            client.setClientAddress(16);
+            client.setClientAddress(1);
             client.setServerAddress(1);
             client.setInterfaceType(InterfaceType.HDLC);
             client.setAuthentication(AUTH_LEVEL);
@@ -212,7 +212,7 @@ public class DLMSMeterConnection {
 
         try {
             // Basic client configuration
-            client.setClientAddress(16);
+            client.setClientAddress(1);
             client.setServerAddress(1);
             client.setInterfaceType(InterfaceType.HDLC);
             client.setAuthentication(AUTH_LEVEL);
@@ -222,9 +222,15 @@ public class DLMSMeterConnection {
             client.getProposedConformance().add(Conformance.GENERAL_PROTECTION);
             client.getProposedConformance().add(Conformance.SELECTIVE_ACCESS);
             client.getProposedConformance().add(Conformance.GET);
+            client.getProposedConformance().add(Conformance.BLOCK_TRANSFER_WITH_GET_OR_READ);
+            client.getProposedConformance().add(Conformance.ACTION);
+            client.getProposedConformance().add(Conformance.BLOCK_TRANSFER_WITH_SET_OR_WRITE);
+            client.getProposedConformance().add(Conformance.SET);
+
 
             TraceLevel traceLevel = TraceLevel.VERBOSE;
-            GXDLMSReader reader = new GXDLMSReader(client, connection, traceLevel, null);
+            String frameCounter = "frameCounterIdentifier";
+            GXDLMSReader reader = new GXDLMSReader(client, connection, traceLevel, frameCounter);
 
             // Open connection and initialize
             connection.open();
@@ -236,15 +242,254 @@ public class DLMSMeterConnection {
             System.out.println("\nReading meter registers:");
 
             // Define registers to read with their OBIS codes
+//            String[][] obisToRead = {
+//                    {"0.0.0.2.0.255", "Active Firmware Identifier"},
+//                    {"0.0.0.2.1.255", "Active Firmware Signature"},
+//                    {"0.0.0.2.8.255", "Active Firmware Version"},
+//                    {"0.0.1.0.0.255", "Current Date and Time (Clock)"},
+//                    {"0.0.40.0.0.255", "Current Association (Logical Name)"},
+//                    {"0.0.41.0.0.255", "SAP Assignment (Service Access Point)"},
+//                    {"0.0.42.0.0.255", "COSEM Logical Device Name"},
+//                    {"0.0.96.1.0.255", "Device ID 1 (Meter Serial Number)"},
+//                    {"0.0.96.1.1.255", "Device ID 2 (Manufacturer ID)"},
+//                    {"0.0.96.1.3.255", "Device ID 3 (Model Number)"},
+//                    {"0.0.96.1.4.255", "Device ID 4 (Version Number)"},
+//                    {"0.0.96.1.5.255", "Device ID 5 (Additional Info)"},
+//                    {"0.0.96.1.6.255", "Device ID 6 (Meter Type)"},
+//                    {"0.0.96.1.8.255", "Device ID 8 (Meter Configuration)"},
+//                    {"0.1.96.1.1.255", "Profile Status (Current Profile)"},
+//                    {"1.0.0.0.0.255", "Metering Point ID 1 (Primary Metering Point)"},
+//                    {"1.0.0.0.1.255", "Metering Point ID 2 (Secondary Metering Point)"},
+//                    {"1.0.0.0.2.255", "Metering Point ID 3 (Tertiary Metering Point)"},
+//                    {"1.0.0.0.3.255", "Metering Point ID 4 (Quaternary Metering Point)"},
+//
+//                    // Demand Registers
+//                    {"1.0.1.4.0.255", "Active Power Demand (Last 15 min)"},
+//                    {"1.0.2.4.0.255", "Reactive Power Demand (Last 15 min)"},
+//                    {"1.0.3.4.0.255", "Apparent Power Demand (Last 15 min)"},
+//                    {"1.0.4.4.0.255", "Peak Demand (Last 30 min)"},
+//                    {"1.0.9.4.0.255", "Maximum Demand (Last 12 months)"},
+//                    {"1.0.10.4.0.255", "Demand Reset Time"},
+//                    {"1.0.15.4.0.255", "Demand Interval Duration"},
+//
+//                    // Extended Registers
+//                    {"1.0.1.6.0.255", "Voltage L1 (Phase 1)"},
+//                    {"1.0.1.6.1.255", "Voltage L2 (Phase 2)"},
+//                    {"1.0.1.6.2.255", "Voltage L3 (Phase 3)"},
+//                    {"1.0.1.6.3.255", "Current L1 (Phase 1)"},
+//                    {"1.0.1.6.4.255", "Current L2 (Phase 2)"},
+//                    {"1.0.2.6.0.255", "Current L3 (Phase 3)"},
+//                    {"1.0.2.6.1.255", "Power Factor L1 (Phase 1)"},
+//                    {"1.0.2.6.2.255", "Power Factor L2 (Phase 2)"},
+//                    {"1.0.2.6.3.255", "Power Factor L3 (Phase 3)"},
+//                    {"1.0.2.6.4.255", "Frequency"},
+//                    {"1.0.3.6.0.255", "Total Active Energy (Import)"},
+//                    {"1.0.3.6.1.255", "Total Active Energy (Export)"},
+//                    {"1.0.3.6. 2.255", "Total Reactive Energy (Import)"},
+//                    {"1.0.3.6.3.255", "Total Reactive Energy (Export)"},
+//                    {"1.0.3.6.4.255", "Total Apparent Energy"},
+//                    {"1.0.4.6.0.255", "Active Energy (Import, Tariff 1)"},
+//                    {"1.0.4.6.1.255", "Active Energy (Export, Tariff 1)"},
+//                    {"1.0.4.6.2.255", "Active Energy (Import, Tariff 2)"},
+//                    {"1.0.4.6.3.255", "Active Energy (Export, Tariff 2)"},
+//                    {"1.0.4.6.4.255", "Reactive Energy (Import, Tariff 1)"},
+//                    {"1.0.9.6.0.255", "Reactive Energy (Export, Tariff 1)"},
+//                    {"1.0.9.6.1.255", "Reactive Energy (Import, Tariff 2)"},
+//
+//                    // Additional Registers
+//                    {"1.0.10.6.0.255", "Total Active Energy (Import, Last Month)"},
+//                    {"1.0.10.6.1.255", "Total Active Energy (Export, Last Month)"},
+//                    {"1.0.10.6.2.255", "Total Reactive Energy (Import, Last Month)"},
+//                    {"1.0.10.6.3.255", "Total Reactive Energy (Export, Last Month)"},
+//                    {"1.0.10.6.4.255", "Total Apparent Energy (Last Month)"},
+//                    {"1.0.15.6.0.255", "Total Active Energy (Import, Last Year)"},
+//                    {"1.0.15.6.1.255", "Total Active Energy (Export, Last Year)"},
+//                    {"1.0.15.6.2.255", "Total Reactive Energy (Import, Last Year)"},
+//                    {"1.0.15.6.3.255", "Total Reactive Energy (Export, Last Year)"},
+//                    {"1.0.15.6.4.255", "Total Apparent Energy (Last Year)"},
+//
+//                    // Register for Monitoring
+//                    {"1.0.11.31.0.255", "Monitoring Register 1"},
+//                    {"1.0.11.35.0.255", "Monitoring Register 2"},
+//                    {"1.0.12.31.0.255", "Monitoring Register 3"},
+//                    {"1.0.12.35.0.255", "Monitoring Register 4"},
+//                    {"1.0.13.31.0.255", "Monitoring Register 5"},
+//                    {"1.0.14.35.0.255", "Monitoring Register 6"},
+//                    {"1.0.15.35.0.255", "Monitoring Register 7"},
+//
+//                    // Profile Generic
+//                    {"1.0.98.1.0.255", "Profile Generic 1"},
+//                    {"1.0.98.2.0.255", "Profile Generic 2"},
+//                    {"1.0.99.1.1.255", "Profile Generic 3"},
+//                    {"1.0.99.98.1.255", "Profile Generic 4"},
+//
+//                    // Additional Registers
+//                    {"1.0.128.11.4.255", "Additional Register 1"},
+//                    {"1.0.189.40.0.255", "Additional Register 2"},
+//                    {"1.0.240.140.0.255", "Additional Register 3"},
+//                    {"1.0.240.141.0.255", "Additional Register 4"},
+//
+//                    // Additional OBIS Codes
+//                    {"1.0.1.8.0.255", "Active Power (Import, Tariff 1)"},
+//                    {"1.0.1.8.1.255", "Active Power (Export, Tariff 1)"},
+//                    {"1.0.1.8.2.255", "Active Power (Import, Tariff 2)"},
+//                    {"1.0.1.8.3.255", "Active Power (Export, Tariff 2)"},
+//                    {"1.0.2.8.0.255", "Reactive Power (Import, Tariff 1)"},
+//                    {"1.0.2.8.1.255", "Reactive Power (Export, Tariff 1)"},
+//                    {"1.0.2.8.2.255", "Reactive Power (Import, Tariff 2)"},
+//
+//                    {"1.0.2.8.3.255", "Reactive Power (Export, Tariff 2)"},
+//                    {"1.0.3.8.0.255", "Apparent Power (Import, Tariff 1)"},
+//                    {"1.0.3.8.1.255", "Apparent Power (Export, Tariff 1)"},
+//                    {"1.0.3.8.2.255", "Apparent Power (Import, Tariff 2)"},
+//                    {"1.0.3.8.3.255", "Apparent Power (Export, Tariff 2)"},
+//                    {"1.0.4.8.0.255", "Active Energy (Import, Tariff 1, Last Month)"},
+//                    {"1.0.4.8.1.255", "Active Energy (Export, Tariff 1, Last Month)"},
+//                    {"1.0.4.8.2.255", "Active Energy (Import, Tariff 2, Last Month)"},
+//                    {"1.0.4.8.3.255", "Active Energy (Export, Tariff 2, Last Month)"},
+//                    {"1.0.5.8.0.255", "Reactive Energy (Import, Tariff 1, Last Month)"},
+//                    {"1.0.5.8.1.255", "Reactive Energy (Export, Tariff 1, Last Month)"},
+//                    {"1.0.5.8.2.255", "Reactive Energy (Import, Tariff 2, Last Month)"},
+//                    {"1.0.5.8.3.255", "Reactive Energy (Export, Tariff 2, Last Month)"},
+//                    {"1.0.6.8.0.255", "Total Active Energy (Import, Last Month)"},
+//                    {"1.0.6.8.1.255", "Total Active Energy (Export, Last Month)"},
+//                    {"1.0.6.8.2.255", "Total Reactive Energy (Import, Last Month)"},
+//                    {"1.0.6.8.3.255", "Total Reactive Energy (Export, Last Month)"},
+//                    {"1.0.7.8.0.255", "Total Active Energy (Import, Last Year)"},
+//                    {"1.0.7.8.1.255", "Total Active Energy (Export, Last Year)"},
+//                    {"1.0.7.8.2.255", "Total Reactive Energy (Import, Last Year)"},
+//                    {"1.0.7.8.3.255", "Total Reactive Energy (Export, Last Year)"},
+//                    {"1.0.8.8.0.255", "Total Apparent Energy (Last Month)"},
+//                    {"1.0.8.8.1.255", "Total Apparent Energy (Last Year)"},
+//                    {"1.0.9.8.0.255", "Total Active Energy (Import, Current Year)"},
+//                    {"1.0.9.8.1.255", "Total Active Energy (Export, Current Year)"},
+//                    {"1.0.9.8.2.255", "Total Reactive Energy (Import, Current Year)"},
+//                    {"1.0.9.8.3.255", "Total Reactive Energy (Export, Current Year)"},
+//                    {"1.0.10.8.0.255", "Total Apparent Energy (Current Year)"},
+//                    {"1.0.11.8.0.255", "Total Active Energy (Import, Current Month)"},
+//                    {"1.0.11.8.1.255", "Total Active Energy (Export, Current Month)"},
+//                    {"1.0.11.8.2.255", "Total Reactive Energy (Import, Current Month)"},
+//                    {"1.0.11.8.3.255", "Total Reactive Energy (Export, Current Month)"},
+//                    {"1.0.12.8.0.255", "Total Apparent Energy (Current Month)"},
+//                    {"1.0.13.8.0.255", "Total Active Energy (Import, Last 24 Hours)"},
+//                    {"1.0.13.8.1.255", "Total Active Energy (Export, Last 24 Hours)"},
+//                    {"1.0.13.8.2.255", "Total Reactive Energy (Import, Last 24 Hours)"},
+//                    {"1.0.13.8.3.255", "Total Reactive Energy (Export, Last 24 Hours)"},
+//                    {"1.0.14.8.0.255", "Total Apparent Energy (Last 24 Hours)"},
+//                    {"1.0.15.8.0.255", "Total Active Energy (Import, Last 7 Days)"},
+//                    {"1.0.15.8.1.255", "Total Active Energy (Export, Last 7 Days)"},
+//                    {"1.0.15.8.2.255", "Total Reactive Energy (Import, Last 7 Days)"},
+//                    {"1.0.15.8.3.255", "Total Reactive Energy (Export, Last 7 Days)"},
+//                    {"1.0.16.8.0.255", "Total Apparent Energy (Last 7 Days)"},
+//                    {"1.0.17.8.0.255", "Total Active Energy (Import, Last 30 Days)"},
+//                    {"1.0.17.8.1.255", "Total Active Energy (Export, Last 30 Days)"},
+//                    {"1.0.17.8.2.255", "Total Reactive Energy (Import, Last 30 Days)"},
+//                    {"1.0.17.8.3.255", "Total Reactive Energy (Export, Last 30 Days)"},
+//                    {"1.0.18.8.0.255", "Total Apparent Energy (Last 30 Days)"},
+//                    {"1.0.19.8.0.255", "Total Active Energy (Import, Last 60 Days)"},
+//                    {"1.0.19.8.1.255", "Total Active Energy (Export, Last 60 Days)"},
+//                    {"1.0.19.8.2.255", "Total Reactive Energy (Import, Last 60 Days)"},
+//                    {"1.0.19.8.3.255", "Total Reactive Energy (Export, Last 60 Days)"},
+//                    {"1.0.20.8.0.255", "Total Apparent Energy (Last 60 Days)"},
+//                    {"1.0.21.8.0.255", "Total Active Energy (Import, Last 90 Days)"},
+//                    {"1.0.21.8.1.255", "Total Active Energy (Export, Last 90 Days)"},
+//                    {"1.0.21.8.2.255", "Total Reactive Energy (Import, Last 90 Days)"},
+//                    {"1.0.21.8.3.255", "Total Reactive Energy (Export, Last 90 Days)"},
+//                    {"1.0.22.8.0.255", "Total Apparent Energy (Last 90 Days)"},
+//                    {"1.0.23.8.0.255", "Total Active Energy (Import, Last 120 Days)"},
+//                    {"1.0.23.8.1.255", "Total Active Energy (Export, Last 120 Days)"},
+//                    {"1.0.23.8.2.255", "Total Reactive Energy (Import, Last 120 Days)"},
+//                    {"1.0.23.8.3.255", "Total Reactive Energy (Export, Last 120 Days)"},
+//                    {"1.0.24.8.0.255", "Total Apparent Energy (Last 120 Days)"},
+//                    {"1.0.25.8.0.255", "Total Active Energy (Import, Last 150 Days)"},
+//                    {"1.0.25.8.1.255", "Total Active Energy (Export, Last 150 Days)"},
+//                    {"1.0.25.8.2.255", "Total Reactive Energy (Import, Last 150 Days)"},
+//                    {"1.0.25.8.3.255", "Total Reactive Energy (Export, Last 150 Days)"},
+//                    {"1.0.26.8.0.255", "Total Apparent Energy (Last 150 Days)"},
+//                    {"1.0.27.8.0.255", "Total Active Energy (Import, Last 180 Days)"},
+//                    {"1.0.27.8.1.255", "Total Active Energy (Export, Last 180 Days)"},
+//                    {"1.0.27.8.2.255", "Total Reactive Energy (Import, Last 180 Days)"},
+//                    {"1.0.27.8.3.255", "Total Reactive Energy (Export, Last 180 Days)"},
+//                    {"1.0.28.8.0.255", "Total Apparent Energy (Last 180 Days)"},
+//                    {"1.0.29.8.0.255", "Total Active Energy (Import, Last 210 Days)"},
+//                    {"1.0.29.8.1.255", "Total Active Energy (Export, Last 210 Days)"},
+//                    {"1.0 .29.8.2.255", "Total Reactive Energy (Import, Last 210 Days)"},
+//                    {"1.0.29.8.3.255", "Total Reactive Energy (Export, Last 210 Days)"},
+//                    {"1.0.30.8.0.255", "Total Apparent Energy (Last 210 Days)"},
+//                    {"1.0.31.8.0.255", "Total Active Energy (Import, Last 240 Days)"},
+//                    {"1.0.31.8.1.255", "Total Active Energy (Export, Last 240 Days)"},
+//                    {"1.0.31.8.2.255", "Total Reactive Energy (Import, Last 240 Days)"},
+//                    {"1.0.31.8.3.255", "Total Reactive Energy (Export, Last 240 Days)"},
+//                    {"1.0.32.8.0.255", "Total Apparent Energy (Last 240 Days)"},
+//                    {"1.0.33.8.0.255", "Total Active Energy (Import, Last 270 Days)"},
+//                    {"1.0.33.8.1.255", "Total Active Energy (Export, Last 270 Days)"},
+//                    {"1.0.33.8.2.255", "Total Reactive Energy (Import, Last 270 Days)"},
+//                    {"1.0.33.8.3.255", "Total Reactive Energy (Export, Last 270 Days)"},
+//                    {"1.0.34.8.0.255", "Total Apparent Energy (Last 270 Days)"},
+//                    {"1.0.35.8.0.255", "Total Active Energy (Import, Last 300 Days)"},
+//                    {"1.0.35.8.1.255", "Total Active Energy (Export, Last 300 Days)"},
+//                    {"1.0.35.8.2.255", "Total Reactive Energy (Import, Last 300 Days)"},
+//                    {"1.0.35.8.3.255", "Total Reactive Energy (Export, Last 300 Days)"},
+//                    {"1.0.36.8.0.255", "Total Apparent Energy (Last 300 Days)"},
+//                    {"1.0.37.8.0.255", "Total Active Energy (Import, Last 330 Days)"},
+//                    {"1.0.37.8.1.255", "Total Active Energy (Export, Last 330 Days)"},
+//                    {"1.0.37.8.2.255", "Total Reactive Energy (Import, Last 330 Days)"},
+//                    {"1.0.37.8.3.255", "Total Reactive Energy (Export, Last 330 Days)"},
+//                    {"1.0.38.8.0.255", "Total Apparent Energy (Last 330 Days)"},
+//                    {"1.0.39.8.0.255", "Total Active Energy (Import, Last 360 Days)"},
+//                    {"1.0.39.8.1.255", "Total Active Energy (Export, Last 360 Days)"},
+//                    {"1.0.39.8.2.255", "Total Reactive Energy (Import, Last 360 Days)"},
+//                    {"1.0.39.8.3.255", "Total Reactive Energy (Export, Last 360 Days)"},
+//                    {"1.0.40.8.0.255", "Total Apparent Energy (Last 360 Days)"}
+//            };
+
             String[][] obisToRead = {
-                    {"0.0.1.0.0.255", "Clock"},
-                    {"1-0:0.0.0", "Meter Serial Number"},  // Convert from display format
-                    {"0.0.96.1.0.255", "Device ID 1"},     // Alternative location for serial number
-                    {"0.0.96.1.1.255", "Device ID 2"},     // Alternative location for serial number
-                    {"0.0.96.9.0.255", "Ambient Temperature"} // Common OBIS code for temperature
+                    {"1-0:0.9.2", "Current Date"},
+                    {"1-0:0.9.1", "Current Time"},
+                    {"1-0:0.0.0", "Meter Serial Number"},
+                    {"1-0:1.8.0", "Import Active Energy"},
+                    {"1-0:2.8.0", "Export Active Energy"},
+                    {"1-0:3.8.0", "Import Reactive Energy"},
+                    {"1-0:4.8.0", "Export Reactive Energy"},
+                    {"1-0:9.8.0", "Import Apparent Energy"},
+                    {"1-0:10.8.0", "Export Apparent Energy"},
+                    {"1-0:15.8.0", "Total Active Energy"},
 
+                    // Tariff E
+                    {"1-0:1.8.E", "Import Active Energy – Tariff E"},
+                    {"1-0:2.8.E", "Export Active Energy – Tariff E"},
+                    {"1-0:3.8.E", "Import Reactive Energy – Tariff E"},
+                    {"1-0:4.8.E", "Export Reactive Energy – Tariff E"},
+                    {"1-0:9.8.E", "Import Apparent Energy – Tariff E"},
+                    {"1-0:10.8.E", "Export Apparent Energy – Tariff E"},
+                    {"1-0:15.8.E", "Total Active Energy – Tariff E"},
+
+                    // History F
+                    {"1-0:1.8.0*F", "Import Active Energy – History F"},
+                    {"1-0:2.8.0*F", "Export Active Energy – History F"},
+                    {"1-0:3.8.0*F", "Import Reactive Energy – History F"},
+                    {"1-0:4.8.0*F", "Export Reactive Energy – History F"},
+                    {"1-0:9.8.0*F", "Import Apparent Energy – History F"},
+                    {"1-0:10.8.0*F", "Export Apparent Energy – History F"},
+
+                    // Instantaneous Values
+                    {"1-0:1.7.0", "Instantaneous Import Active Power"},
+                    {"1-0:2.7.0", "Instantaneous Export Active Power"},
+                    {"1-0:3.7.0", "Instantaneous Import Reactive Power"},
+                    {"1-0:4.7.0", "Instantaneous Export Reactive Power"},
+                    {"1-0:9.7.0", "Instantaneous Import Apparent Power"},
+                    {"1-0:10.7.0", "Instantaneous Export Apparent Power"},
+                    {"1-0:15.7.0", "Instantaneous Export Apparent Power"},
+                    {"1-0:31.7.0", "Instantaneous L1 Current"},
+                    {"1-0:91.7.0", "Instantaneous Neutral Current"},
+                    {"1-0:32.7.0", "Instantaneous L1 Voltage"},
+                    {"1-0:13.7.0", "Instantaneous Power Factor"},
+                    {"1-0:14.7.0", "Instantaneous Frequency"},
+
+                    // Billing Information
+                    {"1-0:0.1.0", "Billing Period Counter"},
+                    {"1-0:0.1.2", "Last Reset Date Time"}
             };
-
             for (String[] obisCode : obisToRead) {
                 try {
                     // Add delay between reads
@@ -285,6 +530,7 @@ public class DLMSMeterConnection {
                         // Print additional object information
                         System.out.println("Object Type: " + obj.getObjectType());
                         System.out.println("Description: " + obj.getDescription());
+                        System.out.println("--------------------------------------------------------------------");
                     } else {
                         System.out.println("Object not found for OBIS code: " + logicalName);
                     }
@@ -316,17 +562,28 @@ public class DLMSMeterConnection {
     // Helper method to get unit string
     private static String getUnitString(int unit) {
         switch (unit) {
-            case 27: return "W";
-            case 28: return "VA";
-            case 29: return "var";
-            case 30: return "Wh";
-            case 31: return "VAh";
-            case 32: return "varh";
-            case 33: return "A";
-            case 35: return "V";
-            case 44: return "Hz";
-            case 62: return "°C";  // Temperature
-            default: return "Unit(" + unit + ")";
+            case 27:
+                return "W";
+            case 28:
+                return "VA";
+            case 29:
+                return "var";
+            case 30:
+                return "Wh";
+            case 31:
+                return "VAh";
+            case 32:
+                return "varh";
+            case 33:
+                return "A";
+            case 35:
+                return "V";
+            case 44:
+                return "Hz";
+            case 62:
+                return "°C";  // Temperature
+            default:
+                return "Unit(" + unit + ")";
         }
     }
 
