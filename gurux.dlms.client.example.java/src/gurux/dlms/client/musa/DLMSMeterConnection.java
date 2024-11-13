@@ -2,7 +2,6 @@ package gurux.dlms.client.musa;
 
 import gurux.common.enums.TraceLevel;
 import gurux.dlms.GXDLMSException;
-import gurux.dlms.GXReplyData;
 import gurux.dlms.client.GXDLMSReader;
 import gurux.dlms.client.GXDLMSSecureClient2;
 import gurux.dlms.enums.Authentication;
@@ -20,9 +19,10 @@ import java.util.Date;
 
 public class DLMSMeterConnection {
 
-    private static final String IP_ADDRESS = "172.16.8.140";  // Set your meter's IP here
+    private static final String IP_ADDRESS = "172.16.8.248";  // Set your meter's IP here
     private static final int PORT = 5258;  // Set the communication port here
-    private static final String PASSWORD = "";
+    private static final String PASSWORD = "UwsaOZy3";
+//    NFVGELYt UwsaOZy3
     private static final Authentication AUTH_LEVEL = Authentication.LOW;  // Adjust as per your meter settings
 
     public static void connectAndReadMeter() {
@@ -135,10 +135,9 @@ public class DLMSMeterConnection {
         }
     }
 
-    public static void main(String[] args) {
-        connectAndReadMeter2();
+    public static void main(String[] args) throws Exception {
+        connectAndReadMeter();
     }
-
 
     public static void connectAndReadMeter1() {
         GXNet connection = new GXNet(NetworkType.TCP, IP_ADDRESS, PORT);
@@ -446,50 +445,116 @@ public class DLMSMeterConnection {
             String[][] obisToRead = {
                     {"1-0:0.9.2", "Current Date"},
                     {"1-0:0.9.1", "Current Time"},
+
+                    
                     {"1-0:0.0.0", "Meter Serial Number"},
-                    {"1-0:1.8.0", "Import Active Energy"},
-                    {"1-0:2.8.0", "Export Active Energy"},
-                    {"1-0:3.8.0", "Import Reactive Energy"},
-                    {"1-0:4.8.0", "Export Reactive Energy"},
-                    {"1-0:9.8.0", "Import Apparent Energy"},
-                    {"1-0:10.8.0", "Export Apparent Energy"},
-                    {"1-0:15.8.0", "Total Active Energy"},
-
-                    // Tariff E
-                    {"1-0:1.8.E", "Import Active Energy – Tariff E"},
-                    {"1-0:2.8.E", "Export Active Energy – Tariff E"},
-                    {"1-0:3.8.E", "Import Reactive Energy – Tariff E"},
-                    {"1-0:4.8.E", "Export Reactive Energy – Tariff E"},
-                    {"1-0:9.8.E", "Import Apparent Energy – Tariff E"},
-                    {"1-0:10.8.E", "Export Apparent Energy – Tariff E"},
-                    {"1-0:15.8.E", "Total Active Energy – Tariff E"},
-
-                    // History F
-                    {"1-0:1.8.0*F", "Import Active Energy – History F"},
-                    {"1-0:2.8.0*F", "Export Active Energy – History F"},
-                    {"1-0:3.8.0*F", "Import Reactive Energy – History F"},
-                    {"1-0:4.8.0*F", "Export Reactive Energy – History F"},
-                    {"1-0:9.8.0*F", "Import Apparent Energy – History F"},
-                    {"1-0:10.8.0*F", "Export Apparent Energy – History F"},
-
-                    // Instantaneous Values
-                    {"1-0:1.7.0", "Instantaneous Import Active Power"},
-                    {"1-0:2.7.0", "Instantaneous Export Active Power"},
-                    {"1-0:3.7.0", "Instantaneous Import Reactive Power"},
-                    {"1-0:4.7.0", "Instantaneous Export Reactive Power"},
-                    {"1-0:9.7.0", "Instantaneous Import Apparent Power"},
-                    {"1-0:10.7.0", "Instantaneous Export Apparent Power"},
-                    {"1-0:15.7.0", "Instantaneous Export Apparent Power"},
-                    {"1-0:31.7.0", "Instantaneous L1 Current"},
-                    {"1-0:91.7.0", "Instantaneous Neutral Current"},
-                    {"1-0:32.7.0", "Instantaneous L1 Voltage"},
-                    {"1-0:13.7.0", "Instantaneous Power Factor"},
-                    {"1-0:14.7.0", "Instantaneous Frequency"},
-
-                    // Billing Information
+                    {"0-0:96.1.2", "HDLC Address"},
+                    {"1-0:96.1.3", "Device Model"},
+                    {"0-0:96.1.4", "Device Manufacturer"},
+                    {"0-0:42.0.0", "Logical Device Name"},
+                    {"0-0:240.46.0", "SGC"},
+                    {"0-0:240.48.0", "TI"},
+                    {"0-0:240.49.0", "KRN"},
+                    {"0-0:0.2.1", "Firmware Version"},
+                    {"0-0:96.1.1", "Software Version"},
+                    {"0-0:96.1.5", "Hardware Version"},
+                    {"0-0:96.1.6", "Hardware PCB Version"},
+                    {"0-0:0.2.8", "Firmware Signature"},
+                    {"0-0:96.2.0", "Number of Programming"},
+                    {"0-0:240.44.0*1", "Event Log - Programming Events(History 1)"},
+                    {"0-0:240.43.0", "Programmer ID"},
+                    {"0-0:96.2.1", "Time of Last Programming"},
+                    {"0-0:96.2.5", "Date of Last Calibration"},
+                    {"0-0:96.2.12", "Date of Last Clock Synchronization"},
+                    {"0-0:96.2.13", "Date of Last Firmware Activation"},
+                    {"0-0:96.14.0", "Currently Active Tariff"},
                     {"1-0:0.1.0", "Billing Period Counter"},
-                    {"1-0:0.1.2", "Last Reset Date Time"}
+                    {"1-0:0.1.2*1", "Last Reset Date(History 1)"},
+                    {"1-0:0.1.3", "Daily Snapshot Count"},
+                    {"1-0:0.1.5*1", "Last Daily Snapshot Date(History 1)"},
+                    {"0-0:97.97.0", "Error Code"},
+                    {"0-0:97.97.7", "Tamper Status"},
+                    {"0-0:96.80.29", "Breaker Status"},
+                    {"0-0:96.90.16", "Disconnect Event Count"},
+                    {"0-0:240.45.0*1", "Event Log - Disconnect(History 1)"},
+                    {"0-0:96.7.0", "Number of Power Failures - All Phases"},
+                    {"0-0:96.12.1", "Number of Optical Port Communications"},
+                    {"0-0:96.8.0", "Total Operation Duration"},
+                    {"0-0:96.90.22", "Monthly Operation Duration"},
+                    {"0-0:96.90.18", "Total Sleep Duration"},
+                    {"1-0:0.6.0", "Rated Voltage"},
+                    {"1-0:0.6.1", "Basic Current"},
+                    {"1-0:0.6.2", "Rated Frequency"},
+                    {"1-0:0.6.3", "Maximum Current"},
+                    {"1-0:0.6.129", "Starting Current"},
+                    {"1-0:0.6.130", "Active Accuracy"},
+                    {"1-0:0.6.131", "Reactive Accuracy"},
+                    {"1-0:0.3.0", "Metrological LED Output Constant - Active Energy (imp/kWh)"},
+                    {"1-0:0.3.1", "Metrological LED Output Constant - Reactive Energy (imp/kvarh)"},
+                    {"0-0:1.0.0", "Clock"},
+                    {"0-0:96.9.0", "Ambient Temperature"},
+                    {"0-0:96.6.3", "Battery Voltage"},
+                    {"0-0:96.6.0", "Battery Use Duration"},
+                    {"0-0:96.90.19", "Wake Up on Battery Duration"},
+                    {"0-0:96.90.20", "Wake Up on Battery Count"},
+                    {"0-0:96.52.2*2", "LoRa Operation Step"},
+                    {"1-0:1.8.0", "Import Active Energy"},
+                    {"1-0:1.8.1", "Import Active Energy - Rate 1"},
+                    {"1-0:1.8.2", "Import Active Energy - Rate 2"},
+                    {"1-0:1.8.3", "Import Active Energy - Rate 3"},
+                    {"1-0:1.8.4", "Import Active Energy - Rate 4"},
+                    {"1-0:2.8.0", "Export Active Energy"},
+                    {"1-0:2.8.1", "Export Active Energy - Rate 1"},
+                    {"1-0:2.8.2", "Export Active Energy - Rate 2"},
+                    {"1-0:2.8.3", "Export Active Energy - Rate 3"},
+                    {"1-0:2.8.4", "Export Active Energy - Rate 4"},
+                    {"1-0:3.8.0", "Import Reactive Energy"},
+                    {"1-0:3.8.1", "Import Reactive Energy - Rate 1"},
+                    {"1-0:3.8.2", "Import Reactive Energy - Rate 2"},
+                    {"1-0:3.8.3", "Import Reactive Energy - Rate 3"},
+                    {"1-0:3.8.4", "Import Reactive Energy - Rate 4"},
+                    {"1-0:4.8.0", "Export Reactive Energy"},
+                    {"1-0:4.8.1", "Export Reactive Energy - Rate 1"},
+                    {"1-0:4.8.2", "Export Reactive Energy - Rate 2"},
+                    {"1-0:4.8.3", "Export Reactive Energy - Rate 3"},
+                    {"1-0:4.8.4", "Export Reactive Energy - Rate 4"},
+                    {"1-0:9.8.0", "Import Apparent Energy"},
+                    {"1-0:9.8.1", "Import Apparent Energy - Rate 1"},
+                    {"1-0:9.8.2", "Import Apparent Energy - Rate 2"},
+                    {"1-0:9.8.3", "Import Apparent Energy - Rate 3"},
+                    {"1-0:9.8.4", "Import Apparent Energy - Rate 4"},
+                    {"1-0:10.8.0", "Export Apparent Energy"},
+                    {"1-0:10.8.1", "Export Apparent Energy - Rate 1"},
+                    {"1-0:10.8.2", "Export Apparent Energy - Rate 2"},
+                    {"1-0:10.8.3", "Export Apparent Energy - Rate 3"},
+                    {"1-0:10.8.4", "Export Apparent Energy - Rate 4"},
+                    {"1-0:15.8.0", "Total Active Energy"},
+                    {"1-0:15.8.1", "Total Active Energy - Rate 1"},
+                    {"1-0:15.8.2", "Total Active Energy - Rate 2"},
+                    {"1-0:15.8.3", "Total Active Energy - Rate 3"},
+                    {"1-0:15.8.4", "Total Active Energy - Rate 4"},
+                    {"1-0:128.8.0", "Total Reactive Energy"},
+                    {"1-0:128.8.1", "Total Reactive Energy - Rate 1"},
+                    {"1-0:128.8.2", "Total Reactive Energy - Rate 2"},
+                    {"1-0:128.8.3", "Total Reactive Energy - Rate 3"},
+                    {"1-0:128.8.4", "Total Reactive Energy - Rate 4"},
+                    {"1-0:129.8.0", "Total Apparent Energy"},
+                    {"1-0:129.8.1", "Total Apparent Energy - Rate 1"},
+                    {"1-0:129.8.2", "Total Apparent Energy - Rate 2"},
+                    {"1-0:129.8.3", "Total Apparent Energy - Rate 3"},
+                    {"1-0:129.8.4", "Total Apparent Energy - Rate 4"},
+                    {"1-0:1.6.0", "Import Active Maximum Demand"},
+                    {"1-0:1.6.1", "Import Active Maximum Demand- Rate 1"},
+                    {"1-0:1.6.2", "Import Active Maximum Demand- Rate 2"},
+                    {"1-0:1.6.3", "Import Active Maximum Demand- Rate 3"},
+                    {"1-0:1.6.4", "Import Active Maximum Demand- Rate 4"},
+                    {"1-0:2.6.0", "Export Active Maximum Demand"},
+                    {"1-0:2.6.1", "Export Active Maximum Demand- Rate 1"},
+                    {"1-0:2.6.2", "Export Active Maximum Demand- Rate 2"},
+                    {"1-0:2.6.3", "Export Active Maximum Demand- Rate 3"},
+                    {"1-0:2.6.4", "Export Active Maximum Demand- Rate 4"}
             };
+
             for (String[] obisCode : obisToRead) {
                 try {
                     // Add delay between reads
