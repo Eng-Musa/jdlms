@@ -1,6 +1,7 @@
 package gurux.dlms.client.musa;
 
 import gurux.common.enums.TraceLevel;
+import gurux.dlms.GXDLMSClient;
 import gurux.dlms.GXDLMSException;
 import gurux.dlms.client.GXDLMSReader;
 import gurux.dlms.client.GXDLMSSecureClient2;
@@ -22,7 +23,7 @@ public class DLMSMeterConnection {
     private static final String IP_ADDRESS = "172.16.8.248";  // Set your meter's IP here
     private static final int PORT = 5258;  // Set the communication port here
     private static final String PASSWORD = "UwsaOZy3";
-//    NFVGELYt UwsaOZy3
+    //    NFVGELYt UwsaOZy3
     private static final Authentication AUTH_LEVEL = Authentication.LOW;  // Adjust as per your meter settings
 
     public static void connectAndReadMeter() {
@@ -136,8 +137,83 @@ public class DLMSMeterConnection {
     }
 
     public static void main(String[] args) throws Exception {
-        connectAndReadMeter();
+        connectAndReadMeter2();
     }
+
+    public static void test() {
+        GXNet connection = new GXNet(NetworkType.TCP, IP_ADDRESS, PORT);
+        GXDLMSSecureClient2 client = new GXDLMSSecureClient2(true);
+
+        try {
+            // Modified client configuration
+            client.setClientAddress(1);
+            client.setServerAddress(1);
+            client.setInterfaceType(InterfaceType.HDLC);
+            client.setAuthentication(Authentication.LOW); // Use low authentication
+            client.setPassword(PASSWORD.getBytes());
+
+            // Add necessary conformance
+            client.getProposedConformance().add(Conformance.GENERAL_PROTECTION);
+            client.getProposedConformance().add(Conformance.SELECTIVE_ACCESS);
+            client.getProposedConformance().add(Conformance.GET);
+
+            // Set trace level for detailed debugging information
+            TraceLevel traceLevel = TraceLevel.VERBOSE;
+
+            // Initialize GXDLMSReader
+            String frameCounter = "frameCounterIdentifier"; // Example frame counter
+            GXDLMSReader reader = new GXDLMSReader(client, connection, traceLevel, frameCounter);
+
+            // Open connection to the meter
+            connection.open();
+
+            // Initialize the connection to retrieve association view.
+            System.out.println("Initializing connection...");
+            reader.initializeConnection();
+
+            // List all objects retrieved from the association view to debug OBIS codes
+            System.out.println("Listing all objects retrieved from the meter:");
+            for (GXDLMSObject obj : client.getObjects()) {
+                System.out.println("Object Type: " + obj.getObjectType() +
+                        " | OBIS Code: " + obj.getLogicalName() +
+                        " | Description: " + obj.getDescription());
+            }
+
+            // Try reading the meter serial number using OBIS code "1.0.0.0.0.255" with any ObjectType
+            System.out.println("Attempting to read meter serial number...");
+            GXDLMSObject serialNumberObject = client.getObjects().findByLN(null, "1.0.0.0.0.255");
+            if (serialNumberObject != null) {
+                Object result = reader.read(serialNumberObject, 2);
+                if (result instanceof byte[]) {
+                    String meterSerialNumber = new String((byte[]) result);
+                    System.out.println("Meter Serial Number: " + meterSerialNumber);
+                } else {
+                    System.out.println("Unexpected result type: " + result.getClass());
+                }
+            } else {
+                System.out.println("Meter serial number object not found. Verify the OBIS code.");
+            }
+
+        } catch (UnknownHostException e) {
+            System.err.println("Error: Unable to resolve host: " + IP_ADDRESS);
+            e.printStackTrace();
+        } catch (GXDLMSException e) {
+            System.err.println("DLMS communication error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                // Close connections safely in finally block
+                System.out.println("Closing connection...");
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception e) {
+                System.err.println("Error closing connection: " + e.getMessage());
+            }
+        }
+    }
+
 
     public static void connectAndReadMeter1() {
         GXNet connection = new GXNet(NetworkType.TCP, IP_ADDRESS, PORT);
@@ -443,10 +519,11 @@ public class DLMSMeterConnection {
 //            };
 
             String[][] obisToRead = {
+                    {"0-0:96.80.4", "Availlable credit"},
                     {"1-0:0.9.2", "Current Date"},
                     {"1-0:0.9.1", "Current Time"},
 
-                    
+
                     {"1-0:0.0.0", "Meter Serial Number"},
                     {"0-0:96.1.2", "HDLC Address"},
                     {"1-0:96.1.3", "Device Model"},
